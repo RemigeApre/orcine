@@ -283,6 +283,24 @@ model TerritoryNationPeriod {
   nation       Nation?               @relation(fields: [nationId], references: [id])
 }
 
+// ─── Inspiration ─────────────────────────────────────────────────────────────
+
+model InspirationSuffix {
+  id        String   @id @default(cuid())
+  value     String
+  meaning   String?
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model InspirationPlace {
+  id        String   @id @default(cuid())
+  name      String
+  region    String?
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
 // ─── Events (Chronologie) ────────────────────────────────────────────────────
 
 model Event {

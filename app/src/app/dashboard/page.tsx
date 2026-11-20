@@ -8,6 +8,7 @@ const MENU = [
   { label: "Identite", href: "/identite" },
   { label: "Territoire", href: "/territoire" },
   { label: "Chronologie", href: "/chronologie" },
+  { label: "Inspiration", href: "/inspiration" },
 ];
 
 export default async function Dashboard() {

@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import LogoutButton from "@/components/LogoutButton";
+import SettingsLink from "@/components/SettingsLink";
 
 interface Props {
   title: string;
+  isAdmin?: boolean;
 }
 
-export default function PageHeader({ title }: Props) {
+export default function PageHeader({ title, isAdmin }: Props) {
   return (
     <header
       className="fixed top-0 left-0 right-0 flex items-center justify-between px-8 py-5 border-b"
@@ -19,7 +22,7 @@ export default function PageHeader({ title }: Props) {
         onMouseEnter={(e) => (e.currentTarget.style.color = "#dfd8cc")}
         onMouseLeave={(e) => (e.currentTarget.style.color = "#8a837a")}
       >
-        Orcine
+        &#8592; Orcine
       </Link>
       <span
         className="text-sm tracking-widest uppercase"
@@ -27,7 +30,10 @@ export default function PageHeader({ title }: Props) {
       >
         {title}
       </span>
-      <div className="w-16" />
+      <div className="flex items-center gap-4">
+        {isAdmin && <SettingsLink />}
+        <LogoutButton />
+      </div>
     </header>
   );
 }
