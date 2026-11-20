@@ -6,28 +6,32 @@ interface Props {
   title: string;
   children: React.ReactNode;
   count?: number;
+  defaultOpen?: boolean;
 }
 
-export default function SubSection({ title, children, count }: Props) {
-  const [open, setOpen] = useState(false);
+export default function SubSection({ title, children, count, defaultOpen = true }: Props) {
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-t" style={{ borderColor: "#2d2926" }}>
+    <div className="mt-7">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="w-full flex items-center justify-between py-3 text-left"
+        className="w-full flex items-center justify-between pb-2 border-b text-left"
+        style={{ borderColor: "#2d2926" }}
       >
-        <span className="text-xs tracking-widest uppercase" style={{ color: "#8a837a", letterSpacing: "0.15em" }}>
+        <span style={{ fontFamily: "var(--font-cormorant)", fontSize: "1.15rem", color: "#dfd8cc", fontWeight: 600 }}>
           {title}
           {count !== undefined && (
-            <span className="ml-2 px-1.5 py-0.5 border text-xs" style={{ borderColor: "#2d2926", color: "#8a837a" }}>
-              {count}
+            <span className="ml-2 text-xs" style={{ color: "#8a837a", fontFamily: "var(--font-inter)", fontWeight: 400 }}>
+              ({count})
             </span>
           )}
         </span>
-        <span className="text-xs" style={{ color: "#8a837a" }}>{open ? "−" : "+"}</span>
+        <span className="text-xs transition-transform duration-200" style={{ color: "#8a837a", transform: open ? "rotate(180deg)" : "rotate(0deg)", display: "inline-block" }}>
+          &#8964;
+        </span>
       </button>
-      {open && <div className="pb-5">{children}</div>}
+      {open && <div className="pt-4">{children}</div>}
     </div>
   );
 }
