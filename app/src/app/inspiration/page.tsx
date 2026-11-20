@@ -15,7 +15,7 @@ export default async function InspirationPage() {
 
   return (
     <>
-      <PageHeader title="Inspiration" isAdmin={session.role === "ADMIN"} />
+      <PageHeader title="Inspiration" />
       <InspirationClient
         initialSuffixes={suffixes}
         initialPlaces={places}
