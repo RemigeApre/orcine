@@ -16,8 +16,6 @@ services:
       context: ./app
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3010:3000"
     environment:
       DATABASE_URL: postgresql://orcine:${POSTGRES_PASSWORD}@postgres:5432/orcine_db
       JWT_SECRET: ${JWT_SECRET}
@@ -26,6 +24,7 @@ services:
       - postgres
     networks:
       - internal
+      - proxy
 
 volumes:
   postgres_data:
@@ -33,3 +32,5 @@ volumes:
 networks:
   internal:
     driver: bridge
+  proxy:
+    external: true
