@@ -35,6 +35,7 @@ export default function TerritoireClient({
   const [detail, setDetail] = useState<NationDetail | TerritoryDetail | null>(null);
   const [sidebarItems, setSidebarItems] = useState<SidebarItem[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
 
   const [showNewNation, setShowNewNation] = useState(false);
   const [newNationName, setNewNationName] = useState("");
@@ -48,7 +49,12 @@ export default function TerritoireClient({
 
   // ─── Navigation ───────────────────────────────────────────────────────────
 
-  async function openNation(id: string, name: string) {
+  async function openNation(id: string, name: string, animate = false) {
+    if (animate) {
+      setFadeOut(true);
+      await new Promise((r) => setTimeout(r, 220));
+      setFadeOut(false);
+    }
     setLoadingDetail(true);
     setShowNewTerritory(false);
     const [detailRes, terrRes] = await Promise.all([
@@ -213,13 +219,20 @@ export default function TerritoireClient({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TerritoireHeader backLabel={backLabel} onBack={goBack} isAdmin={isAdmin} />
+      <TerritoireHeader
+        backLabel={backLabel}
+        onBack={goBack}
+        isAdmin={isAdmin}
+        entityName={current?.name ?? null}
+      />
 
       {/* ─── Cards view ─── */}
       {isCards && (
         <div className="pt-20 px-10 py-10">
-          <div className="grid gap-4"
-            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}>
+          <div
+            className={`grid gap-4 transition-opacity duration-200 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}
+          >
 
             {/* Add card (admin) */}
             {isAdmin && (
@@ -245,7 +258,7 @@ export default function TerritoireClient({
             {nations.map((n) => (
               <button
                 key={n.id}
-                onClick={() => openNation(n.id, n.name)}
+                onClick={() => openNation(n.id, n.name, true)}
                 className="flex flex-col border transition-colors duration-200 text-left overflow-hidden"
                 style={{ borderColor: "#2d2926", minHeight: "220px" }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#c8a06a")}
@@ -260,8 +273,8 @@ export default function TerritoireClient({
                     <span style={{ color: "#2d2926", fontSize: "2.5rem" }}>&#9873;</span>
                   )}
                 </div>
-                <div className="px-4 py-3 border-t" style={{ borderColor: "#2d2926" }}>
-                  <span style={{ color: "#dfd8cc", fontFamily: "var(--font-cormorant)", fontSize: "1.1rem" }}>
+                <div className="px-4 py-3 border-t text-center" style={{ borderColor: "#2d2926" }}>
+                  <span style={{ color: "#dfd8cc", fontFamily: "var(--font-cormorant)", fontSize: "1.1rem", fontWeight: 700 }}>
                     {n.name}
                   </span>
                 </div>
