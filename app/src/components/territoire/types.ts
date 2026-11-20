@@ -1,7 +1,7 @@
 export type PoliticalSystem = { id: string; name: string; isDefault?: boolean };
 export type TerritoryType = { id: string; name: string; isDefault?: boolean };
 export type IdentityRef = { id: string; name: string };
-export type NationRef = { id: string; name: string };
+export type NationRef = { id: string; name: string; flagPath?: string | null };
 export type TerritoryRef = { id: string; name: string; level: number; parentId: string | null; type: TerritoryType | null };
 
 export type DateRange = {
