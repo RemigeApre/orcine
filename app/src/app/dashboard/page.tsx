@@ -22,8 +22,8 @@ export default async function Dashboard() {
       </div>
 
       <h1
-        className="text-5xl font-light mb-20 tracking-widest"
-        style={{ fontFamily: "var(--font-cormorant)", letterSpacing: "0.25em" }}
+        className="text-5xl font-light mb-20"
+        style={{ fontFamily: "var(--font-cormorant)", color: "#dfd8cc", letterSpacing: "0.25em" }}
       >
         Orcine
       </h1>
@@ -33,13 +33,10 @@ export default async function Dashboard() {
           <Link
             key={item.href}
             href={item.href}
-            className="text-lg tracking-widest uppercase transition-colors duration-200 group"
-            style={{ fontFamily: "var(--font-inter)", letterSpacing: "0.2em", color: "#8a837a" }}
+            className="text-sm uppercase tracking-widest transition-colors duration-200 text-muted hover:text-text"
+            style={{ fontFamily: "var(--font-inter)", letterSpacing: "0.2em" }}
           >
-            <span className="group-hover:text-text transition-colors duration-200"
-              style={{ color: "inherit" }}>
-              {item.label}
-            </span>
+            {item.label}
           </Link>
         ))}
       </nav>
