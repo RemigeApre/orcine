@@ -139,7 +139,8 @@ export default function TerritoireClient({
       body: JSON.stringify({ name: newPSName.trim() }),
     });
     if (res.ok) {
-      setPoliticalSystems((p) => [...p, await res.json()].sort((a, b) => a.name.localeCompare(b.name)));
+      const data = await res.json();
+      setPoliticalSystems((p) => [...p, data].sort((a, b) => a.name.localeCompare(b.name)));
       setNewPSName("");
     }
     setSavingPS(false);
@@ -154,7 +155,8 @@ export default function TerritoireClient({
       body: JSON.stringify({ name: newTTName.trim() }),
     });
     if (res.ok) {
-      setTerritoryTypes((p) => [...p, await res.json()].sort((a, b) => a.name.localeCompare(b.name)));
+      const data = await res.json();
+      setTerritoryTypes((p) => [...p, data].sort((a, b) => a.name.localeCompare(b.name)));
       setNewTTName("");
     }
     setSavingTT(false);
