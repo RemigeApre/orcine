@@ -1,16 +1,14 @@
 "use client";
 
-import LogoutButton from "@/components/LogoutButton";
-import SettingsLink from "@/components/SettingsLink";
+import Link from "next/link";
 
 interface Props {
   backLabel: string;
   onBack: () => void;
-  isAdmin: boolean;
   entityName?: string | null;
 }
 
-export default function TerritoireHeader({ backLabel, onBack, isAdmin, entityName }: Props) {
+export default function TerritoireHeader({ backLabel, onBack, entityName }: Props) {
   return (
     <header
       className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-8 py-5 border-b"
@@ -45,10 +43,15 @@ export default function TerritoireHeader({ backLabel, onBack, isAdmin, entityNam
         </span>
       </div>
 
-      <div className="flex items-center gap-4">
-        {isAdmin && <SettingsLink />}
-        <LogoutButton />
-      </div>
+      <Link
+        href="/inspiration"
+        className="text-xs tracking-widest uppercase transition-colors duration-200"
+        style={{ color: "#8a837a", letterSpacing: "0.15em", fontFamily: "var(--font-inter)" }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#dfd8cc")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#8a837a")}
+      >
+        Inspiration
+      </Link>
     </header>
   );
 }

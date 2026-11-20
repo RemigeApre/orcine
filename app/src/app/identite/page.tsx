@@ -18,7 +18,7 @@ export default async function IdentitePage() {
 
   return (
     <>
-      <PageHeader title="Identite" isAdmin={session.role === "ADMIN"} />
+      <PageHeader title="Identite" />
       <SectionClient
         items={items}
         apiBase="/api/identite"

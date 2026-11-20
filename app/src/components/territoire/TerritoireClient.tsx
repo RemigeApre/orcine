@@ -222,7 +222,6 @@ export default function TerritoireClient({
       <TerritoireHeader
         backLabel={backLabel}
         onBack={goBack}
-        isAdmin={isAdmin}
         entityName={current?.name ?? null}
       />
 

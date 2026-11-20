@@ -19,7 +19,7 @@ export default async function ChronologiePage() {
 
   return (
     <>
-      <PageHeader title="Chronologie" isAdmin={session.role === "ADMIN"} />
+      <PageHeader title="Chronologie" />
       <SectionClient
         items={items}
         apiBase="/api/chronologie"
