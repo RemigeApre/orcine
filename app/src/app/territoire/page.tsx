@@ -2,28 +2,33 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import PageHeader from "@/components/PageHeader";
-import SectionClient from "@/components/SectionClient";
-
-const FIELDS = [
-  { key: "name", label: "Nom", type: "text" as const, required: true },
-  { key: "description", label: "Description", type: "textarea" as const },
-  { key: "notes", label: "Notes", type: "textarea" as const },
-];
+import TerritoireClient from "@/components/territoire/TerritoireClient";
 
 export default async function TerritoirePage() {
   const session = await getSession();
   if (!session) redirect("/");
 
-  const items = await prisma.territory.findMany({ orderBy: { name: "asc" } });
+  const [nations, territories, politicalSystems, territoryTypes, identities] = await Promise.all([
+    prisma.nation.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.territory.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, level: true, parentId: true, type: { select: { id: true, name: true } } },
+    }),
+    prisma.politicalSystem.findMany({ orderBy: { name: "asc" } }),
+    prisma.territoryType.findMany({ orderBy: { name: "asc" } }),
+    prisma.identity.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
 
   return (
     <>
       <PageHeader title="Territoire" />
-      <SectionClient
-        items={items}
-        apiBase="/api/territoire"
+      <TerritoireClient
+        initialNations={nations}
+        initialTerritories={territories}
+        politicalSystems={politicalSystems}
+        territoryTypes={territoryTypes}
+        identities={identities}
         isAdmin={session.role === "ADMIN"}
-        fields={FIELDS}
       />
     </>
   );

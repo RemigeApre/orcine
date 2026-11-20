@@ -6,8 +6,11 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Non autorise" }, { status: 401 });
 
-  const items = await prisma.territory.findMany({ orderBy: { name: "asc" } });
-  return NextResponse.json(items);
+  const nations = await prisma.nation.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, originTerritoryId: true },
+  });
+  return NextResponse.json(nations);
 }
 
 export async function POST(req: NextRequest) {
@@ -19,6 +22,6 @@ export async function POST(req: NextRequest) {
   const { name, description, notes } = await req.json();
   if (!name) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
-  const item = await prisma.territory.create({ data: { name, description, notes } });
-  return NextResponse.json(item, { status: 201 });
+  const nation = await prisma.nation.create({ data: { name, description, notes } });
+  return NextResponse.json(nation, { status: 201 });
 }

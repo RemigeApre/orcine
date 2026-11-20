@@ -12,6 +12,35 @@ enum Role {
   ADMIN
 }
 
+enum PeriodEndType {
+  ONGOING
+  DISSOLUTION
+  MERGER
+  ANNEXATION
+  INDEPENDENCE
+  CONQUEST
+  OTHER
+}
+
+enum ContinuityType {
+  CONTINUOUS
+  INTERRUPTED
+  SPORADIC
+}
+
+enum TerritoryRelationType {
+  DIRECT
+  VASSAL
+  AUTONOMOUS
+}
+
+enum ImageType {
+  FLAG
+  COAT_OF_ARMS
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
 model User {
   id        String   @id @default(cuid())
   username  String   @unique
@@ -21,6 +50,28 @@ model User {
   createdBy String?
 }
 
+// ─── Reference lists ─────────────────────────────────────────────────────────
+
+model PoliticalSystem {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  nationRegimes    NationPoliticalRegime[]
+  territoryRegimes TerritoryPoliticalRegime[]
+}
+
+model TerritoryType {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  isDefault   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  territories Territory[]
+}
+
+// ─── Identities ──────────────────────────────────────────────────────────────
+
 model Identity {
   id          String   @id @default(cuid())
   name        String
@@ -28,16 +79,211 @@ model Identity {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  nationRulers    NationRuler[]
+  territoryRulers TerritoryRuler[]
 }
 
-model Territory {
+// ─── Nations ─────────────────────────────────────────────────────────────────
+
+model Nation {
   id          String   @id @default(cuid())
   name        String
   description String?
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  originTerritoryId String?    @unique
+  originTerritory   Territory? @relation("TerritoryBecameNation", fields: [originTerritoryId], references: [id])
+
+  synonyms    NationSynonym[]
+  periods     NationPeriod[]
+  images      NationImage[]
+  rulers      NationRuler[]
+  regimes     NationPoliticalRegime[]
+  capitals    NationCapital[]
+  territories TerritoryNationPeriod[]
 }
+
+model NationSynonym {
+  id       String @id @default(cuid())
+  nationId String
+  name     String
+  nation   Nation @relation(fields: [nationId], references: [id], onDelete: Cascade)
+}
+
+model NationPeriod {
+  id         String         @id @default(cuid())
+  nationId   String
+  startValue Int?
+  startLabel String?
+  endValue   Int?
+  endLabel   String?
+  endType    PeriodEndType  @default(ONGOING)
+  continuity ContinuityType @default(CONTINUOUS)
+  notes      String?
+  nation     Nation         @relation(fields: [nationId], references: [id], onDelete: Cascade)
+}
+
+model NationImage {
+  id         String    @id @default(cuid())
+  nationId   String
+  type       ImageType
+  isCurrent  Boolean   @default(false)
+  filePath   String
+  startValue Int?
+  startLabel String?
+  endValue   Int?
+  endLabel   String?
+  notes      String?
+  nation     Nation    @relation(fields: [nationId], references: [id], onDelete: Cascade)
+}
+
+model NationRuler {
+  id         String   @id @default(cuid())
+  nationId   String
+  identityId String
+  title      String?
+  startValue Int?
+  startLabel String?
+  endValue   Int?
+  endLabel   String?
+  notes      String?
+  nation     Nation   @relation(fields: [nationId], references: [id], onDelete: Cascade)
+  identity   Identity @relation(fields: [identityId], references: [id])
+}
+
+model NationPoliticalRegime {
+  id                String          @id @default(cuid())
+  nationId          String
+  politicalSystemId String
+  startValue        Int?
+  startLabel        String?
+  endValue          Int?
+  endLabel          String?
+  notes             String?
+  nation            Nation          @relation(fields: [nationId], references: [id], onDelete: Cascade)
+  politicalSystem   PoliticalSystem @relation(fields: [politicalSystemId], references: [id])
+}
+
+model NationCapital {
+  id          String    @id @default(cuid())
+  nationId    String
+  territoryId String
+  startValue  Int?
+  startLabel  String?
+  endValue    Int?
+  endLabel    String?
+  notes       String?
+  nation      Nation    @relation(fields: [nationId], references: [id], onDelete: Cascade)
+  territory   Territory @relation(fields: [territoryId], references: [id])
+}
+
+// ─── Territories ─────────────────────────────────────────────────────────────
+
+model Territory {
+  id          String   @id @default(cuid())
+  name        String
+  typeId      String?
+  level       Int      @default(1)
+  parentId    String?
+  description String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  type     TerritoryType? @relation(fields: [typeId], references: [id])
+  parent   Territory?     @relation("TerritoryHierarchy", fields: [parentId], references: [id])
+  children Territory[]    @relation("TerritoryHierarchy")
+
+  becameNation Nation? @relation("TerritoryBecameNation")
+
+  synonyms      TerritorySynonym[]
+  periods       TerritoryPeriod[]
+  images        TerritoryImage[]
+  rulers        TerritoryRuler[]
+  regimes       TerritoryPoliticalRegime[]
+  nationPeriods TerritoryNationPeriod[]
+  asCapital     NationCapital[]
+}
+
+model TerritorySynonym {
+  id          String    @id @default(cuid())
+  territoryId String
+  name        String
+  territory   Territory @relation(fields: [territoryId], references: [id], onDelete: Cascade)
+}
+
+model TerritoryPeriod {
+  id          String         @id @default(cuid())
+  territoryId String
+  startValue  Int?
+  startLabel  String?
+  endValue    Int?
+  endLabel    String?
+  endType     PeriodEndType  @default(ONGOING)
+  continuity  ContinuityType @default(CONTINUOUS)
+  notes       String?
+  territory   Territory      @relation(fields: [territoryId], references: [id], onDelete: Cascade)
+}
+
+model TerritoryImage {
+  id          String    @id @default(cuid())
+  territoryId String
+  type        ImageType
+  isCurrent   Boolean   @default(false)
+  filePath    String
+  startValue  Int?
+  startLabel  String?
+  endValue    Int?
+  endLabel    String?
+  notes       String?
+  territory   Territory @relation(fields: [territoryId], references: [id], onDelete: Cascade)
+}
+
+model TerritoryRuler {
+  id          String   @id @default(cuid())
+  territoryId String
+  identityId  String
+  title       String?
+  startValue  Int?
+  startLabel  String?
+  endValue    Int?
+  endLabel    String?
+  notes       String?
+  territory   Territory @relation(fields: [territoryId], references: [id], onDelete: Cascade)
+  identity    Identity  @relation(fields: [identityId], references: [id])
+}
+
+model TerritoryPoliticalRegime {
+  id                String          @id @default(cuid())
+  territoryId       String
+  politicalSystemId String
+  startValue        Int?
+  startLabel        String?
+  endValue          Int?
+  endLabel          String?
+  notes             String?
+  territory         Territory       @relation(fields: [territoryId], references: [id], onDelete: Cascade)
+  politicalSystem   PoliticalSystem @relation(fields: [politicalSystemId], references: [id])
+}
+
+model TerritoryNationPeriod {
+  id           String                @id @default(cuid())
+  territoryId  String
+  nationId     String?
+  relationType TerritoryRelationType @default(DIRECT)
+  startValue   Int?
+  startLabel   String?
+  endValue     Int?
+  endLabel     String?
+  notes        String?
+  territory    Territory             @relation(fields: [territoryId], references: [id], onDelete: Cascade)
+  nation       Nation?               @relation(fields: [nationId], references: [id])
+}
+
+// ─── Events (Chronologie) ────────────────────────────────────────────────────
 
 model Event {
   id          String   @id @default(cuid())

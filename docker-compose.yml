@@ -20,6 +20,8 @@ services:
       DATABASE_URL: postgresql://orcine:${POSTGRES_PASSWORD}@postgres:5432/orcine_db
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: production
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       - postgres
     networks:
@@ -28,6 +30,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads:
 
 networks:
   internal:
