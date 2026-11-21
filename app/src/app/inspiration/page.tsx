@@ -13,7 +13,7 @@ export default async function InspirationPage() {
       orderBy: { name: "asc" },
       include: { morphemes: { orderBy: [{ origin: "asc" }, { type: "asc" }] } },
     }),
-    prisma.inspirationPlace.findMany({ orderBy: { name: "asc" } }),
+    prisma.inspirationPlace.findMany({ orderBy: { name: "asc" }, include: { themes: true } }),
   ]);
 
   return (
