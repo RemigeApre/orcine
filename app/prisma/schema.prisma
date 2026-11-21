@@ -307,6 +307,7 @@ model InspirationTheme {
   notes     String?
   createdAt DateTime             @default(now())
   morphemes InspirationMorpheme[]
+  places    InspirationPlace[]   @relation("PlaceEtymology")
 }
 
 model InspirationMorpheme {
@@ -320,11 +321,13 @@ model InspirationMorpheme {
 }
 
 model InspirationPlace {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
   name      String
   region    String?
   notes     String?
-  createdAt DateTime @default(now())
+  locked    Boolean            @default(false)
+  createdAt DateTime           @default(now())
+  themes    InspirationTheme[] @relation("PlaceEtymology")
 }
 
 // ─── Events (Chronologie) ────────────────────────────────────────────────────

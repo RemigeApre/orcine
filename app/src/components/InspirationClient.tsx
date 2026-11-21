@@ -20,7 +20,16 @@ type Theme = {
   morphemes: Morpheme[];
 };
 
-type Place = { id: string; name: string; region?: string | null; notes?: string | null };
+type ThemeRef = { id: string; name: string };
+
+type Place = {
+  id: string;
+  name: string;
+  region?: string | null;
+  notes?: string | null;
+  locked: boolean;
+  themes: ThemeRef[];
+};
 
 interface Props {
   initialThemes: Theme[];
@@ -307,10 +316,15 @@ function MorphologiePanel({ initial, isAdmin }: { initial: Theme[]; isAdmin: boo
 
 // ── Places panel ──────────────────────────────────────────────────────────────
 
-function PlacesPanel({ initial, isAdmin }: { initial: Place[]; isAdmin: boolean }) {
+function PlacesPanel({ initial, isAdmin, allThemes }: {
+  initial: Place[];
+  isAdmin: boolean;
+  allThemes: ThemeRef[];
+}) {
   const [items, setItems] = useState<Place[]>(initial);
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [addThemeForId, setAddThemeForId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newRegion, setNewRegion] = useState("");
   const [newNotes, setNewNotes] = useState("");
@@ -342,10 +356,11 @@ function PlacesPanel({ initial, isAdmin }: { initial: Place[]; isAdmin: boolean 
 
   async function handleSave(id: string) {
     setSaving(true);
+    const item = items.find(x => x.id === id)!;
     const res = await fetch(`/api/inspiration/places/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editName, region: editRegion, notes: editNotes }),
+      body: JSON.stringify({ name: editName, region: editRegion, notes: editNotes, locked: item.locked }),
     });
     if (res.ok) {
       const updated = await res.json();
@@ -355,10 +370,38 @@ function PlacesPanel({ initial, isAdmin }: { initial: Place[]; isAdmin: boolean 
     setSaving(false);
   }
 
+  async function handleToggleLock(item: Place) {
+    const res = await fetch(`/api/inspiration/places/${item.id}`, { method: "PATCH" });
+    if (res.ok) {
+      const updated = await res.json();
+      setItems(p => p.map(x => x.id === item.id ? { ...x, locked: updated.locked } : x));
+    }
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Supprimer ce lieu ?")) return;
     const res = await fetch(`/api/inspiration/places/${id}`, { method: "DELETE" });
     if (res.ok) setItems(p => p.filter(x => x.id !== id));
+  }
+
+  async function handleAddTheme(placeId: string, themeId: string) {
+    const res = await fetch(`/api/inspiration/places/${placeId}/themes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ themeId }),
+    });
+    if (res.ok) {
+      const theme = allThemes.find(t => t.id === themeId)!;
+      setItems(p => p.map(x => x.id === placeId ? { ...x, themes: [...x.themes, theme] } : x));
+      setAddThemeForId(null);
+    }
+  }
+
+  async function handleRemoveTheme(placeId: string, themeId: string) {
+    const res = await fetch(`/api/inspiration/places/${placeId}/themes/${themeId}`, { method: "DELETE" });
+    if (res.ok) {
+      setItems(p => p.map(x => x.id === placeId ? { ...x, themes: x.themes.filter(t => t.id !== themeId) } : x));
+    }
   }
 
   return (
@@ -392,7 +435,9 @@ function PlacesPanel({ initial, isAdmin }: { initial: Place[]; isAdmin: boolean 
         </div>
       )}
 
-      <div className="grid text-xs py-2 border-b" style={{ gridTemplateColumns: "180px 150px 1fr auto", borderColor: "#2d2926" }}>
+      {/* Table header */}
+      <div className="grid text-xs py-2 border-b pl-9"
+        style={{ gridTemplateColumns: "170px 130px 1fr auto", borderColor: "#2d2926" }}>
         {["LIEU", "RÉGION", "NOTES", ""].map((h, i) => (
           <span key={i} style={{ color: "#8a837a", letterSpacing: "0.1em" }}>{h}</span>
         ))}
@@ -403,39 +448,104 @@ function PlacesPanel({ initial, isAdmin }: { initial: Place[]; isAdmin: boolean 
       )}
 
       {items.map(item => (
-        <div key={item.id} className="grid py-2.5 border-b items-center gap-2"
-          style={{ gridTemplateColumns: "180px 150px 1fr auto", borderColor: "#1e1c1a" }}>
-          {editId === item.id ? (
-            <>
-              <input value={editName} onChange={(e) => setEditName(e.target.value)}
-                className={inputClass + " w-full"} style={inputStyle} onFocus={focusAmber} onBlur={blurDark} />
-              <input value={editRegion} onChange={(e) => setEditRegion(e.target.value)}
-                className={inputClass + " w-full"} style={inputStyle} onFocus={focusAmber} onBlur={blurDark} />
-              <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)}
-                className={inputClass + " w-full"} style={inputStyle} onFocus={focusAmber} onBlur={blurDark} />
-              <div className="flex gap-2">
-                <button onClick={() => handleSave(item.id)} disabled={saving}
-                  className="text-xs" style={{ color: "#c8a06a" }}>{saving ? "..." : "OK"}</button>
-                <button onClick={() => setEditId(null)} className="text-xs" style={{ color: "#8a837a" }}>✕</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <span style={{ color: "#dfd8cc", fontFamily: "var(--font-cormorant)", fontSize: "1rem" }}>{item.name}</span>
-              <span className="text-xs" style={{ color: "#8a837a" }}>{item.region ?? ""}</span>
-              <span className="text-xs italic" style={{ color: "#8a837a" }}>{item.notes ?? ""}</span>
-              {isAdmin && (
-                <div className="flex gap-2">
-                  <button onClick={() => startEdit(item)} className="text-xs" style={{ color: "#8a837a" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#c8a06a")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#8a837a")}>Modifier</button>
-                  <button onClick={() => handleDelete(item.id)} className="text-xs" style={{ color: "#8a837a" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#a05050")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#8a837a")}>✕</button>
+        <div key={item.id} className="border-b" style={{ borderColor: "#1e1c1a", opacity: item.locked ? 0.6 : 1 }}>
+
+          {/* Main row */}
+          <div className="flex items-center gap-2 py-2.5">
+            {/* Lock button */}
+            <button
+              onClick={() => isAdmin && handleToggleLock(item)}
+              className="shrink-0 w-7 text-center text-sm transition-opacity duration-150"
+              style={{ color: item.locked ? "#c8a06a" : "#3a3632", cursor: isAdmin ? "pointer" : "default" }}
+              title={item.locked ? "Bloqué — cliquer pour déverrouiller" : "Disponible — cliquer pour bloquer"}>
+              {item.locked ? "🔒" : "🔓"}
+            </button>
+
+            {editId === item.id ? (
+              <>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)}
+                  className={inputClass} style={{ ...inputStyle, width: "150px" }} onFocus={focusAmber} onBlur={blurDark} />
+                <input value={editRegion} onChange={(e) => setEditRegion(e.target.value)}
+                  className={inputClass} style={{ ...inputStyle, width: "120px" }} onFocus={focusAmber} onBlur={blurDark} />
+                <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)}
+                  className={inputClass + " flex-1"} style={inputStyle} onFocus={focusAmber} onBlur={blurDark} />
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => handleSave(item.id)} disabled={saving}
+                    className="text-xs" style={{ color: "#c8a06a" }}>{saving ? "..." : "OK"}</button>
+                  <button onClick={() => setEditId(null)} className="text-xs" style={{ color: "#8a837a" }}>✕</button>
                 </div>
-              )}
-            </>
-          )}
+              </>
+            ) : (
+              <>
+                <span style={{ color: "#dfd8cc", fontFamily: "var(--font-cormorant)", fontSize: "1rem", width: "170px", flexShrink: 0 }}>
+                  {item.name}
+                </span>
+                <span className="text-xs shrink-0" style={{ color: "#8a837a", width: "130px" }}>
+                  {item.region ?? ""}
+                </span>
+                <span className="text-xs italic flex-1 min-w-0 truncate" style={{ color: "#8a837a" }}>
+                  {item.notes ?? ""}
+                </span>
+                {isAdmin && (
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => startEdit(item)} className="text-xs" style={{ color: "#8a837a" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#c8a06a")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#8a837a")}>Modifier</button>
+                    <button onClick={() => handleDelete(item.id)} className="text-xs" style={{ color: "#8a837a" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#a05050")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#8a837a")}>✕</button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Etymology row */}
+          <div className="flex flex-wrap gap-1.5 pl-9 pb-2.5 items-center">
+            {item.themes.map(theme => (
+              <span key={theme.id}
+                className="inline-flex items-center gap-1 px-2 py-0.5 border text-xs group"
+                style={{ borderColor: "#c8a06a33", color: "#c8a06a", backgroundColor: "#1c1a18" }}>
+                {theme.name}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleRemoveTheme(item.id, theme.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-xs leading-none"
+                    style={{ color: "#a05050" }}>×</button>
+                )}
+              </span>
+            ))}
+
+            {isAdmin && (
+              addThemeForId === item.id ? (
+                <select
+                  autoFocus
+                  defaultValue=""
+                  onChange={(e) => { if (e.target.value) handleAddTheme(item.id, e.target.value); }}
+                  onBlur={() => setAddThemeForId(null)}
+                  className={inputClass}
+                  style={{ ...inputStyle, color: "#dfd8cc", fontSize: "0.7rem" }}
+                  onFocus={focusAmber}>
+                  <option value="" disabled style={{ backgroundColor: "#1c1a18" }}>Choisir un thème...</option>
+                  {allThemes
+                    .filter(t => !item.themes.find(x => x.id === t.id))
+                    .map(t => (
+                      <option key={t.id} value={t.id} style={{ backgroundColor: "#1c1a18" }}>{t.name}</option>
+                    ))}
+                </select>
+              ) : (
+                <button
+                  onClick={() => setAddThemeForId(item.id)}
+                  className="text-xs"
+                  style={{ color: "#3a3632" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#c8a06a")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#3a3632")}>
+                  + étymologie
+                </button>
+              )
+            )}
+          </div>
+
         </div>
       ))}
     </div>
@@ -469,7 +579,13 @@ export default function InspirationClient({ initialThemes, initialPlaces, isAdmi
       </div>
 
       {tab === "morphologie" && <MorphologiePanel initial={initialThemes} isAdmin={isAdmin} />}
-      {tab === "lieux" && <PlacesPanel initial={initialPlaces} isAdmin={isAdmin} />}
+      {tab === "lieux" && (
+        <PlacesPanel
+          initial={initialPlaces}
+          isAdmin={isAdmin}
+          allThemes={initialThemes.map(t => ({ id: t.id, name: t.name }))}
+        />
+      )}
     </div>
   );
 }

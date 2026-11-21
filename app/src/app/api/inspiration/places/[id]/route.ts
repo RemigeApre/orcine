@@ -9,12 +9,34 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Interdit" }, { status: 403 });
 
   const { id } = await params;
-  const { name, region, notes } = await req.json();
+  const { name, region, notes, locked } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
 
   const item = await prisma.inspirationPlace.update({
     where: { id },
-    data: { name: name.trim(), region: region?.trim() || null, notes: notes?.trim() || null },
+    data: {
+      name: name.trim(),
+      region: region?.trim() || null,
+      notes: notes?.trim() || null,
+      ...(locked !== undefined ? { locked } : {}),
+    },
+    include: { themes: { orderBy: { name: "asc" } } },
+  });
+  return NextResponse.json(item);
+}
+
+export async function PATCH(req: NextRequest, { params }: Params) {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") return NextResponse.json({ error: "Interdit" }, { status: 403 });
+
+  const { id } = await params;
+  const current = await prisma.inspirationPlace.findUnique({ where: { id } });
+  if (!current) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
+
+  const item = await prisma.inspirationPlace.update({
+    where: { id },
+    data: { locked: !current.locked },
+    include: { themes: { orderBy: { name: "asc" } } },
   });
   return NextResponse.json(item);
 }
