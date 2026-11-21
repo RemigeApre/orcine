@@ -285,12 +285,38 @@ model TerritoryNationPeriod {
 
 // ─── Inspiration ─────────────────────────────────────────────────────────────
 
-model InspirationSuffix {
-  id        String   @id @default(cuid())
-  value     String
-  meaning   String?
+enum MorphemeType {
+  PREFIXE
+  SUFFIXE
+  MOT
+}
+
+enum MorphemeOrigin {
+  LATIN
+  GERMANIQUE
+  CELTE
+  NORDIQUE
+  GREC
+  ARABE
+  AUTRE
+}
+
+model InspirationTheme {
+  id        String               @id @default(cuid())
+  name      String
   notes     String?
-  createdAt DateTime @default(now())
+  createdAt DateTime             @default(now())
+  morphemes InspirationMorpheme[]
+}
+
+model InspirationMorpheme {
+  id      String          @id @default(cuid())
+  themeId String
+  value   String
+  type    MorphemeType
+  origin  MorphemeOrigin
+  notes   String?
+  theme   InspirationTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
 }
 
 model InspirationPlace {

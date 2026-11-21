@@ -8,8 +8,11 @@ export default async function InspirationPage() {
   const session = await getSession();
   if (!session) redirect("/");
 
-  const [suffixes, places] = await Promise.all([
-    prisma.inspirationSuffix.findMany({ orderBy: { value: "asc" } }),
+  const [themes, places] = await Promise.all([
+    prisma.inspirationTheme.findMany({
+      orderBy: { name: "asc" },
+      include: { morphemes: { orderBy: [{ origin: "asc" }, { type: "asc" }] } },
+    }),
     prisma.inspirationPlace.findMany({ orderBy: { name: "asc" } }),
   ]);
 
@@ -17,7 +20,7 @@ export default async function InspirationPage() {
     <>
       <PageHeader title="Inspiration" />
       <InspirationClient
-        initialSuffixes={suffixes}
+        initialThemes={themes}
         initialPlaces={places}
         isAdmin={session.role === "ADMIN"}
       />
